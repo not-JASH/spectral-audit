@@ -35,7 +35,7 @@ The command writes `band_powers.csv` with absolute powers and explicitly denomin
 
 Run `python -m pytest -q` and `python -m ruff check .`. Tests include independent rFFT and explicit-DFT checks, endpoint and scaling cases, strict configuration rejection, deterministic artifacts, and manifest digests.
 
-The [research protocol](docs/RESEARCH_PROTOCOL.md) defines the measurement targets. See the [measure contract](docs/MEASURE_CONTRACT.md), [comparison contract](docs/COMPARISON_CONTRACT.md), [Welch example](docs/M1_WELCH_EXAMPLE.md), [Haar example](docs/M1_DWT_EXAMPLE.md), [db4 boundary example](docs/M1_BOUNDARY_EXAMPLE.md), [engineering specification](docs/ENGINEERING_SPEC.md), [acceptance criteria](docs/ACCEPTANCE_CRITERIA.md), [roadmap](docs/ROADMAP.md), and [references](docs/REFERENCES.md). Other extension modes, broader offset controls, general operators, diagnostics, development studies, and confirmation remain planned.
+The [research protocol](docs/RESEARCH_PROTOCOL.md) defines the measurement targets. See the [measure contract](docs/MEASURE_CONTRACT.md), [comparison contract](docs/COMPARISON_CONTRACT.md), [comparison example](docs/M1_COMPARISON_EXAMPLE.md), [Welch example](docs/M1_WELCH_EXAMPLE.md), [Haar example](docs/M1_DWT_EXAMPLE.md), [db4 boundary example](docs/M1_BOUNDARY_EXAMPLE.md), [engineering specification](docs/ENGINEERING_SPEC.md), [acceptance criteria](docs/ACCEPTANCE_CRITERIA.md), [roadmap](docs/ROADMAP.md), and [references](docs/REFERENCES.md). Other extension modes, broader offset controls, general operators, diagnostics, development studies, and confirmation remain planned.
 
 ## Citation and license
 
