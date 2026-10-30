@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from spectral_audit import __version__
+from spectral_audit.boundary_audit import run as run_boundary_audit
 from spectral_audit.config import load_demo_config, load_measure_config
 from spectral_audit.estimators.dwt import measure_dwt
 from spectral_audit.estimators.welch import measure_welch
@@ -29,6 +30,9 @@ def main(argv: list[str] | None = None) -> int:
         "--config", required=True, type=Path, help="schema-v2 or v3 TOML configuration"
     )
     measure.add_argument("--out", required=True, type=Path, help="new or empty output directory")
+    boundary = commands.add_parser("boundary-audit", help="run bounded db4 boundary audit")
+    boundary.add_argument("--config", required=True, type=Path)
+    boundary.add_argument("--out", required=True, type=Path)
     args = parser.parse_args(argv)
     started = datetime.now(UTC)
     clock = time.perf_counter()
@@ -36,6 +40,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.out.exists() and (not args.out.is_dir() or any(args.out.iterdir())):
             raise ValueError(f"output directory already exists and is nonempty: {args.out}")
         root = Path(__file__).resolve().parents[2]
+        if args.command == "boundary-audit":
+            manifest = run_boundary_audit(args.config, args.out, root)
+            print(f"boundary audit: {len(manifest['input_records'])} input records")
+            print(args.out / "manifest.json")
+            return 0
         if args.command == "demo":
             config = load_demo_config(args.config)
             record = make_tones(config.signal, config.record)

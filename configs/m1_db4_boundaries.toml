@@ -1,0 +1,9 @@
+config_kind = "dwt_boundary_audit"
+schema_version = 1
+
+[audit]
+sampling_rate_hz = 128
+sample_unit = "a.u."
+lengths = [30, 31, 32]
+modes = ["periodization", "periodic"]
+response_length = 64
