@@ -2,6 +2,10 @@
 
 Spectral Audit studies when classical spectral and multiresolution band-power measurements can be compared. This repository implements M0 and bounded M1 Welch, Haar, db4 boundary, and paired-record comparison increments. Schema v2 describes DFT/Welch differences; schema v3 adds separately labeled native Haar groups. A separate boundary audit compares two-level db4 modes. The comparison audit checks supported exact targets and explicit descriptive differences against positive and negative controls. Full M1 remains open. The DFT result measures the declared finite record, not an unknown continuous spectrum.
 
+## Alpha preview installation
+
+The supported `v0.1.0a2` route is to download the GitHub release source archive, extract it, keep that directory available, and install that source in editable mode. The CLI reads source modules, root metadata, and supplied configurations from that directory. See [RELEASE.md](RELEASE.md) for commands and scope. A standalone wheel is not a supported installation route for this preview.
+
 ## Quick start
 
 Requires Python 3.11 or newer. In a project virtual environment:

@@ -1,6 +1,6 @@
 # Roadmap and intended deliverables
 
-Status: M0 and the bounded Welch, Haar, db4 boundary, and paired-record comparison increments have local verification records below. M1 remains partial; M2–M4 remain planned. The historical records are retained as observed at each increment. Publication and CI for the comparison increment are reported after the push.
+Status at alpha2 preparation (2026-10-30): M0 and bounded Welch, Haar, db4 boundary, and comparison increments are present. M1 remains partial; M2–M4 remain planned. Historical verification records below retain their original source identities. Remaining offset controls, extension modes, Welch variants, and broader comparison work are reserved for interactive evaluation or later development. Release preparation does not start another implementation increment.
 
 ## 1. Milestone plan
 
