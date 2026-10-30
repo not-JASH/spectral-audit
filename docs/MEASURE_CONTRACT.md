@@ -90,3 +90,35 @@ scientific output. It records both PyWavelets' runtime-reported version and
 installed distribution version, as well as the DWT source module in the source
 inventory. The same generated record is passed to each method, and identity,
 rate, length, units, and preprocessing are checked before writing.
+
+## Separate db4 boundary audit
+
+`boundary-audit` accepts only `config_kind = "dwt_boundary_audit"`, schema version
+1, with the declared 30/31/32 sample cases, both modes, and a 64-sample coherent
+response panel. It does not invoke Welch. It supports finite real 1D inputs of
+length at least 28 in the underlying evaluator, two-level db4, and explicit
+`periodic` or `periodization` only. The modes have distinct method IDs. Existing
+Haar schema v3 and its square orthonormal invariants remain unchanged.
+
+For each native group `A2`, `D2`, `D1`, the audit stores raw squared sum,
+coefficient count, `record_normalized_coefficient_energy = sum(c²)/original_n`,
+and `coefficient_mean_square = sum(c²)/count`. Their unit is input-unit squared.
+Record-power ratios use original mean square; method-total shares use the sum of
+record-normalized group energies. Zero denominators yield null and specific
+reasons. Native groups have nominal Hz annotations, not Fourier interval support.
+Mode differences are descriptive periodic-minus-periodization differences for
+the same input and native group role.
+
+The per-level ledger records actual stage lengths, index rule, level-two
+approximation dependency, any duplicated endpoint, filter length, stride,
+alignment, output counts, and all-coefficient retention. Structural extension
+dependency counts mean that nonzero taps accessed wrapped or duplicated values,
+including inherited level-one dependencies. They do not indicate numerical
+error. The original-record-power discrepancy is separate from the accounting
+residual. Periodization uses the independent recursive endpoint identity;
+periodic uses the explicit finite filter bank. Reconstruction is checked on the
+original extent, with full reconstructed length and extra samples recorded.
+`responses.csv` stores the *sum* of cosine and sine record-normalized group
+energies at each coherent frequency. The analytical circular filter response
+applies only to compatible 64-sample periodization; periodic uses the explicit
+finite reference, and its circular analytical formula is marked unavailable.

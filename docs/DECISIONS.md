@@ -22,3 +22,11 @@
 - Support `pywt.wavedec(x, wavelet="haar", mode="periodization", level=2)` only for finite real 1D records of length divisible by four. Reject incompatible lengths before PyWavelets can extend them. Retain every coefficient; do not add preprocessing or claim a population target. Record `sum(c²)/n` and `sum(c²)/n_g` as distinct, non-variance quantities.
 - Use nominal dyadic Hz ranges only as annotations. A 16 Hz phase change can move native `A2` and `D2` contributions while leaving finite-record DFT band power unchanged; this follows the declared decimated transform, not a demonstrated bug or population bias.
 - Package metadata resolves PyWavelets 1.9.0 in the Windows Python 3.11.9 environment. The imported package reports `pywt.__version__ = 1.8.0`; both installed distribution and runtime-reported versions are recorded in v3 manifests rather than silently treating them as the same string.
+
+## 2026-10-30 — bounded db4 boundary audit
+
+- Keep the Haar schema-v3 method and square Parseval checks intact. Add a separate strict boundary-audit configuration and DWT-only CLI path for db4 level 2 at lengths 30, 31, and 32, with a 64-sample response panel.
+- Give periodic and periodization distinct method identities. Record the runtime decomposition taps and their hash, and check them against attributed release constants. Use a direct reference with explicit stage indexing, convolution, and downsampling for signed coefficient, extension, and periodic energy checks.
+- Normalize every group energy by original record length. Keep raw coefficient sums and counts, coefficient mean squares, original record power, method total, signed discrepancy, and independent accounting residual separate. Do not apply a scalar redundancy correction.
+- Treat periodization as the descriptive comparison baseline. Structural extension dependencies describe filter support and inherited dependencies, not measured error. Response formulas are applicable only to compatible periodization; use the explicit finite reference for periodic response rows.
+- Retain both installed PyWavelets distribution and imported runtime version strings. The tagged upstream metadata offers a plausible explanation for their difference, without identifying installed files by itself.
