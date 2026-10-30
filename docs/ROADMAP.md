@@ -1,6 +1,6 @@
 # Roadmap and intended deliverables
 
-Status: M0 local implementation verified on 2026-10-30; public push status is recorded separately after publication. M1–M4 remain planned. Update this document only from actual completed work and recorded checks.
+Status: M0 and the first Welch increment are historically verified below. A bounded Haar DWT increment has been implemented and locally checked on 2026-10-30. M1 remains partial; M2–M4 remain planned. Publication and CI status for the current increment are reported after the push. Update this document only from actual completed work and recorded checks.
 
 ## 1. Milestone plan
 
@@ -117,4 +117,11 @@ The report answers what was measured, what was compared, what the controls ruled
 - After that commit, installed `spectral-audit --help`, `--version`, the M0 demo, and both `measure` configs completed. Each comparison's numerical files were byte-identical across two new output directories, and independent reads matched every manifest output SHA-256. A third invocation into a nonempty output directory returned a nonzero status without overwrite. Both source manifests truthfully recorded `source_state=clean`, that commit, and source digest `1c41ea2d4fa6a2c9992fcd9fbd887b153dc660168a80adc2c982691034e7a52e`.
 - Observed powers and their analytical fixture expectations are separated in [M1_WELCH_EXAMPLE.md](M1_WELCH_EXAMPLE.md). The independent tests cover even/odd explicit DFT matrices, DC/Nyquist, scaling, taper and tail support, zero denominators, white-noise windowed identity and six-standard-error ensemble bound, invalid settings, empty-bin bands, CLI determinism/digests, collision refusal, and failed-write manifest behavior.
 - DWT, complete nearest-work review, dense operators, diagnostics, sweeps, calibration, confirmation, and research conclusions remain open. Next bounded task: DWT native-group contract and independently verified periodized orthonormal case, alongside continuation of the prior-work audit.
+
+## Bounded Haar DWT increment of M1 — local verification, 2026-10-30
+
+- Implemented strict schema v3 with one two-level Haar/periodization family, native `A2`, `D2`, `D1` groups, separately named record contributions and coefficient mean squares, nominal frequency annotations, distinct serialization, and a focused four-source prior-work audit. This is **partial M1**.
+- Project Python 3.11.9 environment: the baseline was 53 passed and Ruff passed. After implementation, 77 tests passed and Ruff passed. The added checks include an independent pairwise Haar oracle, a hand-normalized fixture, square orthogonal matrices at lengths 4/8/12/20, reconstruction, scaling, pure-group and impulse controls, phase-sensitive 16 Hz values, input/configuration refusal, serialization, output hashes, collision refusal, and interrupted-write behavior. These are local checks before final publication; final verification is recorded in the completion report.
+- AC-M1-08 and AC-M1-11 are supported by the independent oracle and hand fixture. The compatible-periodization portion of AC-M1-09, supported-mode accounting and controls in AC-M1-10, and the native-label refusal portion of AC-M1-12 are covered. Existing DFT/Welch comparison controls remain available. The complete AC-M1-09 longer-filter `periodic` comparison, broader AC-M1-10 extension modes, AC-M1-12 frequency sweep or response calculation and common-target acceptance, AC-M1-13 offset controls, and AC-M1-14 comparison gate remain open. Welch AC-M1-06 changed-window/hop and AC-M1-07 padding variants also remain open. Therefore full M1 is not accepted.
+- Next bounded task: longer-filter boundary-mode and extension accounting with independent response checks, followed by explicit matched-target comparison controls. General M2 operators, diagnostic policies, sweeps, calibration, confirmation, and release work are separate.
 

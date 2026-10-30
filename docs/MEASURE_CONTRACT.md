@@ -1,4 +1,4 @@
-# Bounded M1 Welch measure contract
+# Bounded M1 measurement contract
 
 `spectral-audit measure --config <file> --out <new-or-empty-dir>` accepts strict TOML
 schema version 2. It retains schema-v1 `record`, `signal`, `bands`, and `reference`
@@ -47,3 +47,46 @@ and hash, source/configuration/signal/output hashes, environment versions, and
 truthful Git state. Its declared source inventory covers package Python files,
 `pyproject.toml`, and `requirements-lock.txt`. Numerical files are deterministic
 within an unchanged environment; generated run directories are ignored.
+
+## Strict schema v3: finite Haar native scales
+
+Schema v3 retains all schema-v2 sections and requires `[dwt]` with exactly
+`method_id = "dwt_haar_periodization_level2_v1"`, `wavelet = "haar"`,
+`level = 2`, and `mode = "periodization"`. Unknown or unsupported keys and
+values are errors; v1 and v2 do not accept `[dwt]`. The complete resolved
+settings are hashed. The record must be a finite real vector with at least four
+samples and length divisible by four; powers of two are unnecessary. The
+adapter calls `pywt.wavedec` with these settings explicitly. It does not demean,
+detrend, pad, trim, threshold, or discard coefficients. The supported
+`periodization` family has no length extension for these compatible records;
+`periodic` is a distinct, unsupported mode.
+
+The result has native groups `A2`, `D2`, `D1` in that order, with counts
+`n/4`, `n/4`, `n/2`. Its support kind is `native_scale_group`, never an exact
+Fourier `Band`. For each coefficient group `g`, `native_scale_record_power`
+is `sum(c_g**2)/n` and `native_scale_coefficient_mean_square` is
+`sum(c_g**2)/count(g)`. The relationship is
+`record contribution = count(g)/n * coefficient mean square`. Both have
+sample-unit-squared units. Neither is a centered coefficient variance. The
+orthonormal transform preserves the record mean square when all groups are
+retained, as checked independently for this finite configuration.
+
+`record_power_fraction` divides by actual record mean square, and
+`method_total_fraction` divides by the sum of native record contributions.
+Zero absolute quantities are valid. A zero denominator produces an undefined
+fraction with `zero_record_power` or `zero_method_total_power`. Nonfinite
+calculation stops with a numerical-range error. At `fs = 128` Hz, nominal
+annotations are `A2: 0–16`, `D2: 16–32`, and `D1: 32–64` Hz; these are
+approximate associations and have no exact Fourier endpoint rule.
+
+Schema-v3 `comparisons.csv` keeps the exact-band DFT/Welch rows and their
+descriptive differences. `native_scales.csv` has the native group counts,
+quantities, totals, fractions, units, and per-quantity validity. Its
+`difference_from_dft` is blank with unavailable reason
+`native_scale_not_exact_fourier_band`. `summary.json` contains all three
+methods with distinct measurement and support kinds; only Welch carries a
+density unit. `manifest.json` is written atomically last and hashes every
+scientific output. It records both PyWavelets' runtime-reported version and
+installed distribution version, as well as the DWT source module in the source
+inventory. The same generated record is passed to each method, and identity,
+rate, length, units, and preprocessing are checked before writing.

@@ -15,3 +15,10 @@
 - Use periodic Hann, all complete frames from zero, no padding or detrending, one-sided mean density, window-squared-energy normalization, and discrete-bin integration. Reject bands with no estimator bins. Report omitted samples and zero-taper-weight covered samples separately.
 - Preserve M0 fractions as fractions of actual record mean square. Add a separately named fraction of Welch method total. The Welch accounting error compares its spectral total to the independent windowed time-domain identity; its signed difference from unweighted record power is a distinct descriptive field.
 - The first implementation and contract were committed as `1248c1b0870fc82458cf9cc9885ada43b69eb288`; clean local runs from that revision are documented in `M1_WELCH_EXAMPLE.md`. This decision does not accept full M1 or make a new research claim.
+
+## 2026-10-30 — bounded Haar DWT increment
+
+- Add strict schema v3 only; v1 demo and v2 DFT/Welch remain strict. Keep the existing exact-band `Measurement` and comparison serializer for Fourier bands. Use a separate validated native group/result type for DWT, with `support_kind = native_scale_group` and no ordinary DFT difference.
+- Support `pywt.wavedec(x, wavelet="haar", mode="periodization", level=2)` only for finite real 1D records of length divisible by four. Reject incompatible lengths before PyWavelets can extend them. Retain every coefficient; do not add preprocessing or claim a population target. Record `sum(c²)/n` and `sum(c²)/n_g` as distinct, non-variance quantities.
+- Use nominal dyadic Hz ranges only as annotations. A 16 Hz phase change can move native `A2` and `D2` contributions while leaving finite-record DFT band power unchanged; this follows the declared decimated transform, not a demonstrated bug or population bias.
+- Package metadata resolves PyWavelets 1.9.0 in the Windows Python 3.11.9 environment. The imported package reports `pywt.__version__ = 1.8.0`; both installed distribution and runtime-reported versions are recorded in v3 manifests rather than silently treating them as the same string.

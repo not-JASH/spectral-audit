@@ -8,6 +8,7 @@ from pathlib import Path
 
 from spectral_audit import __version__
 from spectral_audit.config import load_demo_config, load_measure_config
+from spectral_audit.estimators.dwt import measure_dwt
 from spectral_audit.estimators.welch import measure_welch
 from spectral_audit.io import write_demo_run, write_measure_run
 from spectral_audit.reference import fourier_reference
@@ -16,15 +17,17 @@ from spectral_audit.signals import make_tones
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="spectral-audit", description="Finite-record DFT demo and bounded Welch comparison"
+        prog="spectral-audit", description="Finite-record DFT, Welch, and bounded Haar DWT"
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     commands = parser.add_subparsers(dest="command", required=True)
     demo = commands.add_parser("demo", help="run the deterministic two-tone demonstration")
     demo.add_argument("--config", required=True, type=Path, help="schema-v1 TOML configuration")
     demo.add_argument("--out", required=True, type=Path, help="new or empty output directory")
-    measure = commands.add_parser("measure", help="run a schema-v2 DFT and Welch comparison")
-    measure.add_argument("--config", required=True, type=Path, help="schema-v2 TOML configuration")
+    measure = commands.add_parser("measure", help="run schema-v2 or v3 measurement")
+    measure.add_argument(
+        "--config", required=True, type=Path, help="schema-v2 or v3 TOML configuration"
+    )
     measure.add_argument("--out", required=True, type=Path, help="new or empty output directory")
     args = parser.parse_args(argv)
     started = datetime.now(UTC)
@@ -54,6 +57,7 @@ def main(argv: list[str] | None = None) -> int:
             record = make_tones(config.tones.signal, config.tones.record)
             measurement = fourier_reference(record, config.tones.bands)
             estimate = measure_welch(record, config.tones.bands, config.welch)
+            native = measure_dwt(record, config.dwt) if config.dwt is not None else None
             arguments = ["measure", "--config", str(args.config), "--out", "<output-directory>"]
             paths = write_measure_run(
                 args.out,
@@ -66,6 +70,7 @@ def main(argv: list[str] | None = None) -> int:
                 started,
                 time.perf_counter() - clock,
                 arguments,
+                native,
             )
     except (ValueError, FileNotFoundError, PermissionError) as exc:
         print(f"spectral-audit: {exc}", file=sys.stderr)
@@ -81,6 +86,8 @@ def main(argv: list[str] | None = None) -> int:
     ):
         fraction_text = str(fraction) if fraction is not None else "undefined"
         print(f"{band.name}: {power:.12g}; record fraction: {fraction_text}")
-    for path in (paths.csv, paths.summary, paths.manifest):
+    for path in (paths.csv, paths.native_scales, paths.summary, paths.manifest):
+        if path is None:
+            continue
         print(path)
     return 0

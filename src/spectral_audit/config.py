@@ -5,6 +5,8 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from spectral_audit.estimators.dwt import METHOD_ID as DWT_METHOD_ID
+from spectral_audit.estimators.dwt import DWTSettings
 from spectral_audit.estimators.welch import WelchSettings
 from spectral_audit.types import Band, DemoConfig, RecordConfig, ToneSignalConfig
 
@@ -33,8 +35,10 @@ def load_demo_config(path: Path) -> DemoConfig:
 
 def _parse_tones(data: dict, version: int) -> DemoConfig:
     expected = {"schema_version", "experiment_id", "record", "signal", "bands", "reference"}
-    if version == 2:
+    if version in (2, 3):
         expected.add("welch")
+    if version == 3:
+        expected.add("dwt")
     _keys(data, expected)
     if type(data["schema_version"]) is not int or data["schema_version"] != version:
         raise ValueError(f"unsupported schema_version; expected {version}")
@@ -67,12 +71,16 @@ def _parse_tones(data: dict, version: int) -> DemoConfig:
 class MeasureConfig:
     tones: DemoConfig
     welch: WelchSettings
+    dwt: DWTSettings | None = None
 
 
 def load_measure_config(path: Path) -> MeasureConfig:
     with path.open("rb") as stream:
         data = tomllib.load(stream)
-    tones = _parse_tones(data, 2)
+    version = data.get("schema_version")
+    if type(version) is not int or version not in (2, 3):
+        raise ValueError("unsupported schema_version; expected 2 or 3")
+    tones = _parse_tones(data, version)
     w = _keys(
         data["welch"],
         {"method_id", "segment_length", "noverlap"},
@@ -80,6 +88,14 @@ def load_measure_config(path: Path) -> MeasureConfig:
     )
     if w["method_id"] != "welch_mean_density_v1":
         raise ValueError("unsupported Welch method_id")
+    dwt = None
+    if version == 3:
+        d = _keys(data["dwt"], {"method_id", "wavelet", "level", "mode"})
+        if d["method_id"] != DWT_METHOD_ID:
+            raise ValueError("unsupported DWT method_id")
+        dwt = DWTSettings(d["wavelet"], d["level"], d["mode"])
+        if tones.record.n_samples < 4 or tones.record.n_samples % 4:
+            raise ValueError("DWT record length must be >= 4 and divisible by four")
     return MeasureConfig(
         tones,
         WelchSettings(
@@ -94,13 +110,16 @@ def load_measure_config(path: Path) -> MeasureConfig:
             boundary=w.get("boundary", "none"),
             padding=w.get("padding", "none"),
         ),
+        dwt,
     )
 
 
 def resolved_measure_config(config: MeasureConfig) -> dict:
     result = resolved_config(config.tones)
-    result["schema_version"] = 2
+    result["schema_version"] = 3 if config.dwt is not None else 2
     result["welch"] = config.welch.resolved()
+    if config.dwt is not None:
+        result["dwt"] = config.dwt.resolved()
     return result
 
 
