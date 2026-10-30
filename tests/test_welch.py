@@ -82,6 +82,7 @@ def test_impulse_coverage_and_denominators():
     assert result.fractions == pytest.approx([1 / 2, 3 / 2])
     assert result.method_total_fractions == pytest.approx([1 / 4, 3 / 4])
     assert result.support["frame_starts"] == (0, 2)
+    assert result.support["frame_weights"] == [0.5, 0.5]
     assert result.support["omitted_sample_indices"] == []
     assert result.support["zero_taper_weight_sample_indices"] == [0]
 
@@ -228,6 +229,9 @@ def test_measure_cli_artifacts_and_rejections(tmp_path):
             rows = list(csv.DictReader(stream))
         assert len(rows) == 6
         assert rows[3]["difference_from_dft"]
+        assert rows[3]["method_total_status"] == "ok"
+        assert rows[3]["difference_status"] == "ok"
+        assert rows[3]["comparison_status"] == "descriptive"
     for name in ("comparisons.csv", "summary.json"):
         assert (outputs[0] / name).read_bytes() == (outputs[1] / name).read_bytes()
     collision = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)

@@ -148,7 +148,8 @@ def measure_welch(
     support = {
         "frame_starts": starts,
         "frame_count": len(starts),
-        "frame_weights": "equal_arithmetic_1/K",
+        "frame_weights": [1 / len(starts)] * len(starts),
+        "frame_weight_policy": "equal_arithmetic_1/K",
         "covered_sample_count": len(covered),
         "omitted_sample_indices": sorted(set(range(n)) - covered),
         "zero_taper_weight_sample_indices": zero_weight,

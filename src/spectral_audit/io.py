@@ -265,8 +265,14 @@ MEASURE_COLUMNS = (
     "power_status",
     "power_reason",
     "record_power",
+    "record_power_status",
+    "record_power_reason",
     "method_total_power",
+    "method_total_status",
+    "method_total_reason",
     "method_total_minus_record_power",
+    "method_total_minus_record_power_status",
+    "method_total_minus_record_power_reason",
     "record_power_fraction",
     "record_fraction_status",
     "record_fraction_reason",
@@ -275,6 +281,8 @@ MEASURE_COLUMNS = (
     "method_fraction_reason",
     "comparison_reference_id",
     "difference_from_dft",
+    "difference_status",
+    "difference_reason",
     "comparison_status",
     "comparison_reason",
 )
@@ -299,6 +307,8 @@ def write_measure_run(
     out.mkdir(parents=True, exist_ok=True)
     sample_bytes = np.asarray(record.samples, dtype="<f8", order="C").tobytes(order="C")
     record_id = digest(sample_bytes)
+    if reference.record_id != record_id or estimate.record_id != record_id:
+        raise ValueError("comparison measurements do not match the input record")
     resolved = resolved_measure_config(config)
     dft_settings = {
         "method_id": reference.method_id,
@@ -358,8 +368,14 @@ def write_measure_run(
                     power_status,
                     power_reason or "",
                     _number(measurement.record_power),
+                    "ok",
+                    "",
                     _number(measurement.method_total),
+                    "ok",
+                    "",
                     _number(measurement.method_total - measurement.record_power),
+                    "ok",
+                    "",
                     _number(record_fraction),
                     "undefined" if record_reason else "ok",
                     record_reason or "",
@@ -368,6 +384,8 @@ def write_measure_run(
                     method_reason or "",
                     reference.method_id,
                     _number(difference),
+                    "ok",
+                    "",
                     "descriptive",
                     "different_finite_record_functionals"
                     if measurement is estimate
@@ -390,6 +408,8 @@ def write_measure_run(
                     "method_fraction_status": "undefined" if method_reason else "ok",
                     "method_fraction_reason": method_reason,
                     "difference_from_dft": difference,
+                    "difference_status": "ok",
+                    "difference_reason": None,
                 }
             )
         summary_methods.append(
@@ -405,12 +425,20 @@ def write_measure_run(
                     "sample_count": record.samples.size,
                 },
                 "record_power": measurement.record_power,
+                "record_power_status": "ok",
+                "record_power_reason": None,
                 "method_total_power": measurement.method_total,
+                "method_total_status": "ok",
+                "method_total_reason": None,
                 "method_total_minus_record_power": measurement.method_total
                 - measurement.record_power,
+                "method_total_minus_record_power_status": "ok",
+                "method_total_minus_record_power_reason": None,
                 "accounting_error": measurement.accounting_error
                 if measurement.accounting_error is not None
                 else measurement.method_total - measurement.record_power,
+                "accounting_error_status": "ok",
+                "accounting_error_reason": None,
                 "bands": method_bands,
             }
         )

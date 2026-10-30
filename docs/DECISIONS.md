@@ -7,3 +7,11 @@
 - Keep the DFT reference as absolute mean-square power. Fractions divide by actual record mean square; zero-power fractions are null with `zero_reference_power`.
 - Write deterministic CSV/summary bytes and a final completion manifest through temporary files and atomic replacement. The manifest includes an inventory of source package Python files, `pyproject.toml`, and the environment lock. Generated output directories remain ignored.
 - The M0 CLI has only `demo`; later estimators, diagnostics, and study commands remain planned. Numerical artifacts are not committed.
+
+## 2026-10-30 — bounded first M1 Welch increment
+
+- Keep schema-v1 `demo` unchanged. Add strict schema-v2 `measure` for one deterministic tone record, the existing DFT reference, and `welch_mean_density_v1` only. Resolve and hash the complete supported Welch setting family before evaluation.
+- Use `finite_record_windowed_band_power` as the Welch measurement kind, with no population target asserted for deterministic tones. The DFT retains `finite_record_fourier`. Label differences `difference_from_dft` and comparison status `descriptive`.
+- Use periodic Hann, all complete frames from zero, no padding or detrending, one-sided mean density, window-squared-energy normalization, and discrete-bin integration. Reject bands with no estimator bins. Report omitted samples and zero-taper-weight covered samples separately.
+- Preserve M0 fractions as fractions of actual record mean square. Add a separately named fraction of Welch method total. The Welch accounting error compares its spectral total to the independent windowed time-domain identity; its signed difference from unweighted record power is a distinct descriptive field.
+- The first implementation and contract were committed as `1248c1b0870fc82458cf9cc9885ada43b69eb288`; clean local runs from that revision are documented in `M1_WELCH_EXAMPLE.md`. This decision does not accept full M1 or make a new research claim.
