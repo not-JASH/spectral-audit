@@ -1,0 +1,11 @@
+# Tested on CPython 3.11, Windows x86_64, 2026-10-30.
+# Regenerate in a fresh project venv: python -m pip install -e ".[dev]"; python -m pip freeze --exclude-editable > requirements-lock.txt
+# The project-local editable distribution is intentionally excluded.
+colorama==0.4.6
+iniconfig==2.3.1
+numpy==2.4.6
+packaging==26.3
+pluggy==1.7.0
+Pygments==2.21.0
+pytest==9.2.0
+ruff==0.17.3

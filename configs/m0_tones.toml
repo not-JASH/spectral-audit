@@ -1,0 +1,39 @@
+# Canonical M0 example. Copy to configs/m0_tones.toml in the new repository.
+# Analytical finite-record mean-square powers: low=0.5, mid=0.125, high=0.
+# This file specifies a future executable example; it is not an experiment result.
+schema_version = 1
+experiment_id = "m0_coherent_tones"
+
+[record]
+n_samples = 256
+sampling_rate_hz = 128.0
+sample_unit = "a.u."
+mean_policy = "none"
+
+[signal]
+kind = "tones"
+frequencies_hz = [8.0, 24.0]
+amplitudes = [1.0, 0.5]
+phases_rad = [0.0, 0.0]
+
+[[bands]]
+name = "low"
+lower_hz = 0.0
+upper_hz = 16.0
+include_upper = false
+
+[[bands]]
+name = "mid"
+lower_hz = 16.0
+upper_hz = 32.0
+include_upper = false
+
+[[bands]]
+name = "high"
+lower_hz = 32.0
+upper_hz = 64.0
+include_upper = true
+
+[reference]
+kind = "finite_record_dft"
+fft_norm = "ortho"
