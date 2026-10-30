@@ -2,6 +2,8 @@
 
 import csv
 import json
+import shutil
+import subprocess
 from dataclasses import replace
 from pathlib import Path
 
@@ -109,6 +111,49 @@ def test_audit_determinism_hashes_and_refusal(tmp_path):
     assert len(rows) == 38 and all(r["expected_match"] == "True" for r in rows)
     with pytest.raises(ValueError, match="nonempty"):
         run(CONFIG, a, ROOT)
+
+
+def test_archive_and_checkout_provenance(tmp_path, monkeypatch):
+    import spectral_audit.comparison_audit as audit
+
+    source = tmp_path / "source"
+    shutil.copytree(ROOT / "src", source / "src")
+    shutil.copytree(ROOT / "configs", source / "configs")
+    for name in ("pyproject.toml", "requirements-lock.txt"):
+        shutil.copy2(ROOT / name, source / name)
+    config = source / "configs/m1_comparison_controls.toml"
+
+    missing = run(config, tmp_path / "missing", source)
+    assert (missing["source_state"], missing["source_revision"]) == ("unversioned", None)
+    assert missing["source_files"] and missing["source_digest"]
+
+    original_git = audit._git
+    monkeypatch.setattr(audit, "_git", lambda root, *args: None if args == (
+        "status", "--porcelain"
+    ) else original_git(root, *args))
+    unusable = run(config, tmp_path / "unusable", source)
+    assert (unusable["source_state"], unusable["source_revision"]) == ("unversioned", None)
+    monkeypatch.setattr(audit, "_git", original_git)
+
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    unrelated = run(config, tmp_path / "unrelated", source)
+    assert (unrelated["source_state"], unrelated["source_revision"]) == (
+        "unversioned", None
+    )
+
+    subprocess.run(["git", "init", "-q", str(source)], check=True)
+    subprocess.run(["git", "-C", str(source), "add", "src", "configs",
+                    "pyproject.toml", "requirements-lock.txt"], check=True)
+    subprocess.run(["git", "-C", str(source), "-c", "user.name=Test",
+                    "-c", "user.email=test@example.invalid", "commit", "-qm", "source"], check=True)
+    revision = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"],
+                                       text=True).strip()
+    clean = run(config, tmp_path / "clean", source)
+    assert (clean["source_state"], clean["source_revision"]) == ("clean", revision)
+
+    (source / "pyproject.toml").write_text((source / "pyproject.toml").read_text() + "\n")
+    dirty = run(config, tmp_path / "dirty", source)
+    assert (dirty["source_state"], dirty["source_revision"]) == ("dirty", revision)
 
 
 def test_audit_manifest_is_last_and_unexpected_outcome_fails(tmp_path, monkeypatch):

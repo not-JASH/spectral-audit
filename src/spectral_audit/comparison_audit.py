@@ -344,7 +344,18 @@ def run(config_path: Path, out: Path, root: Path) -> dict:
     summary_data = json_bytes(summary)
     inventory, source_digest = _source_inventory(root)
     revision = _git(root, "rev-parse", "HEAD")
+    git_root = _git(root, "rev-parse", "--show-toplevel")
     status = _git(root, "status", "--porcelain")
+    state = (
+        "unversioned"
+        if revision is None
+        or git_root is None
+        or status is None
+        or Path(git_root).resolve() != root.resolve()
+        else "dirty"
+        if status
+        else "clean"
+    )
     output_data = {"comparison_controls.csv": csv_data, "summary.json": summary_data}
     manifest = {
         "config_kind": config["config_kind"],
@@ -361,8 +372,8 @@ def run(config_path: Path, out: Path, root: Path) -> dict:
         "scipy_version": scipy.__version__,
         "pywavelets_version": pywt.__version__,
         "pywavelets_distribution_version": importlib.metadata.version("PyWavelets"),
-        "source_revision": revision,
-        "source_state": "dirty" if status else "clean",
+        "source_revision": revision if state != "unversioned" else None,
+        "source_state": state,
         "source_files": inventory,
         "source_digest": source_digest,
         "outputs": {name: digest(data) for name, data in output_data.items()},
