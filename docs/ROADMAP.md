@@ -1,6 +1,6 @@
 # Roadmap and intended deliverables
 
-Status: M0 and the first Welch increment are historically verified below. A bounded Haar DWT increment has been implemented and locally checked on 2026-10-30. M1 remains partial; M2–M4 remain planned. Publication and CI status for the current increment are reported after the push. Update this document only from actual completed work and recorded checks.
+Status at alpha1 preparation (2026-10-30): M0 and bounded Welch, Haar, and db4 boundary increments are present. M1 remains partial; M2–M4 remain planned. Historical verification records below retain their original source identities. The later comparison increment belongs to alpha2. Remaining offset controls, extension modes, Welch variants, and broader comparison work are reserved for interactive evaluation or later development. Release preparation does not start another implementation increment.
 
 ## 1. Milestone plan
 

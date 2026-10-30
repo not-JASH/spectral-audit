@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spectral-audit"
-version = "0.0.1.dev0"
+version = "0.1.0a1"
 description = "Finite-record spectral measurement research scaffold"
 readme = "README.md"
 requires-python = ">=3.11"
