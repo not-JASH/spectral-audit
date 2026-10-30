@@ -30,3 +30,11 @@
 - Normalize every group energy by original record length. Keep raw coefficient sums and counts, coefficient mean squares, original record power, method total, signed discrepancy, and independent accounting residual separate. Do not apply a scalar redundancy correction.
 - Treat periodization as the descriptive comparison baseline. Structural extension dependencies describe filter support and inherited dependencies, not measured error. Response formulas are applicable only to compatible periodization; use the explicit finite reference for periodic response rows.
 - Retain both installed PyWavelets distribution and imported runtime version strings. The tagged upstream metadata offers a plausible explanation for their difference, without identifying installed files by itself.
+
+## 2026-10-30 — bounded M1 comparison policy
+
+- Add `m1_comparison_v1` for paired finite records, with separate target decision and numerical status. Preserve `record_id` as sample-byte identity; add rate, unit, length, and preprocessing to the comparison context. Supported resolved method settings and quantity support determine a target, not values or labels.
+- Accept named identical-definition and conditional actual-record mean-square identities. Require complete DFT bands, compatible complete Haar groups, or all db4 periodization groups with original length divisible by four. The current Hann Welch and redundant or incompatible db4 totals retain distinct functionals, even at coincident values.
+- Convert native coefficient mean square to original-record-normalized energy only on explicit request for the same retained group and validated count. Keep the original value and conversion factor. This conversion does not confer a total-energy partition identity.
+- Permit only explicit DFT/Welch absolute-band and db4 mode/group descriptive differences. The production writers use the shared policy before arithmetic and retain their legacy output labels. Ratios carry numerator and denominator definitions. Matched zero-denominator ratios retain their target relation with an unavailable metric.
+- Keep unknown method and population mappings unavailable. The finite control suite is an implementation check, not a calibrated comparison diagnostic or a research performance estimate. Broader R-17 adversarial coverage and AC-M1-14 population-estimand work remain open.

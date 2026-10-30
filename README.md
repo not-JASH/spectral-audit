@@ -1,6 +1,6 @@
 # Spectral Audit
 
-Spectral Audit studies when classical spectral and multiresolution band-power measurements can be compared. This repository implements M0 and bounded M1 Welch, Haar, and db4 boundary increments. Schema v2 compares DFT and Welch exact frequency bands; schema v3 adds separately labeled native Haar groups. A separate boundary-audit configuration compares two-level db4 periodic and periodization transforms. Full M1 remains open. The DFT result measures the declared finite record, not an unknown continuous spectrum.
+Spectral Audit studies when classical spectral and multiresolution band-power measurements can be compared. This repository implements M0 and bounded M1 Welch, Haar, db4 boundary, and paired-record comparison increments. Schema v2 describes DFT/Welch differences; schema v3 adds separately labeled native Haar groups. A separate boundary audit compares two-level db4 modes. The comparison audit checks supported exact targets and explicit descriptive differences against positive and negative controls. Full M1 remains open. The DFT result measures the declared finite record, not an unknown continuous spectrum.
 
 ## Quick start
 
@@ -20,6 +20,7 @@ spectral-audit measure --config configs/m1_dwt_tones.toml --out results/m1_dwt_t
 spectral-audit measure --config configs/m1_dwt_16hz_phase0.toml --out results/m1_dwt_phase0
 spectral-audit measure --config configs/m1_dwt_16hz_phase90.toml --out results/m1_dwt_phase90
 spectral-audit boundary-audit --config configs/m1_db4_boundaries.toml --out results/m1_db4_boundaries
+spectral-audit comparison-audit --config configs/m1_comparison_controls.toml --out results/m1_comparison_controls
 ```
 
 The lock records the tested CPython 3.11 Windows environment. On another platform, use compatible resolved packages if a pinned wheel is unavailable, and record that environment separately. Refresh the lock in a fresh environment with `python -m pip install -e '.[dev]'` followed by `python -m pip freeze --exclude-editable > requirements-lock.txt`, then rerun tests, lint, and the demo. The project-local editable distribution is omitted from the lock intentionally.
@@ -34,7 +35,7 @@ The command writes `band_powers.csv` with absolute powers and explicitly denomin
 
 Run `python -m pytest -q` and `python -m ruff check .`. Tests include independent rFFT and explicit-DFT checks, endpoint and scaling cases, strict configuration rejection, deterministic artifacts, and manifest digests.
 
-The [research protocol](docs/RESEARCH_PROTOCOL.md) defines the measurement targets. See the [measure contract](docs/MEASURE_CONTRACT.md), [Welch example](docs/M1_WELCH_EXAMPLE.md), [Haar example](docs/M1_DWT_EXAMPLE.md), [db4 boundary example](docs/M1_BOUNDARY_EXAMPLE.md), [engineering specification](docs/ENGINEERING_SPEC.md), [acceptance criteria](docs/ACCEPTANCE_CRITERIA.md), [roadmap](docs/ROADMAP.md), and [references](docs/REFERENCES.md). Other extension modes, matched-target controls, general operators, diagnostics, development studies, and confirmation remain planned.
+The [research protocol](docs/RESEARCH_PROTOCOL.md) defines the measurement targets. See the [measure contract](docs/MEASURE_CONTRACT.md), [comparison contract](docs/COMPARISON_CONTRACT.md), [Welch example](docs/M1_WELCH_EXAMPLE.md), [Haar example](docs/M1_DWT_EXAMPLE.md), [db4 boundary example](docs/M1_BOUNDARY_EXAMPLE.md), [engineering specification](docs/ENGINEERING_SPEC.md), [acceptance criteria](docs/ACCEPTANCE_CRITERIA.md), [roadmap](docs/ROADMAP.md), and [references](docs/REFERENCES.md). Other extension modes, broader offset controls, general operators, diagnostics, development studies, and confirmation remain planned.
 
 ## Citation and license
 

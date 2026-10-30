@@ -17,6 +17,7 @@ import pywt
 from spectral_audit import __version__
 from spectral_audit.boundary import BoundarySettings, evaluate
 from spectral_audit.boundary_reference import DB4_HIGH, DB4_LOW, decompose
+from spectral_audit.comparisons import ComparisonRequest, compare_quantities, native_quantity
 from spectral_audit.io import _atomic_write, _git, _number, _source_inventory, digest, json_bytes
 from spectral_audit.types import SignalRecord
 
@@ -154,9 +155,16 @@ def run(config_path: Path, out: Path, root: Path) -> dict:
                             "status": "ok",
                         }
                     )
-            for left, right in zip(
-                pair["periodic"]["groups"], pair["periodization"]["groups"], strict=True
-            ):
+            right_groups = {g["name"]: g for g in pair["periodization"]["groups"]}
+            for left in pair["periodic"]["groups"]:
+                right = right_groups[left["name"]]
+                comparison = compare_quantities(
+                    native_quantity(pair["periodization"], right["name"]),
+                    native_quantity(pair["periodic"], left["name"]),
+                    ComparisonRequest("descriptive_difference"),
+                )
+                if comparison.decision != "accepted":
+                    raise ValueError(f"boundary comparison policy: {comparison.reason}")
                 comparison_rows.append(
                     {
                         "case_id": case_id,
@@ -170,8 +178,7 @@ def run(config_path: Path, out: Path, root: Path) -> dict:
                         "periodization_method_id": pair["periodization"]["method_id"],
                         "periodic_value": left["record_normalized_coefficient_energy"],
                         "periodization_value": right["record_normalized_coefficient_energy"],
-                        "difference": left["record_normalized_coefficient_energy"]
-                        - right["record_normalized_coefficient_energy"],
+                        "difference": comparison.signed_difference,
                         "power_unit": pair["periodic"]["power_unit"],
                     }
                 )

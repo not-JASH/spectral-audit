@@ -19,6 +19,11 @@ import pywt
 import scipy
 
 from spectral_audit import __version__
+from spectral_audit.comparisons import (
+    ComparisonRequest,
+    band_quantity,
+    compare_quantities,
+)
 from spectral_audit.config import (
     MeasureConfig,
     canonical_json_bytes,
@@ -323,8 +328,10 @@ def write_measure_run(
 ) -> RunPaths:
     if out.exists() and (not out.is_dir() or any(out.iterdir())):
         raise ValueError(f"output directory already exists and is nonempty: {out}")
-    if reference.bands != estimate.bands or reference.record_power != estimate.record_power:
-        raise ValueError("comparison requires the same record and bands")
+    if len(reference.bands) != len(estimate.bands):
+        raise ValueError("comparison requires matching band collections")
+    if reference.record_power != estimate.record_power:
+        raise ValueError("comparison record-power metadata disagree")
     sample_bytes = np.asarray(record.samples, dtype="<f8", order="C").tobytes(order="C")
     record_id = digest(sample_bytes)
     if reference.record_id != record_id or estimate.record_id != record_id:
@@ -348,6 +355,22 @@ def write_measure_run(
         or native.record_power != reference.record_power
     ):
         raise ValueError("native measurement does not match the shared record")
+    reference_by_support = {
+        (b.lower_hz, b.upper_hz, b.include_upper): i
+        for i, b in enumerate(reference.bands)
+    }
+    comparisons = {}
+    for i, band in enumerate(estimate.bands):
+        key = (band.lower_hz, band.upper_hz, band.include_upper)
+        if key not in reference_by_support:
+            raise ValueError("comparison requires matching Fourier band support")
+        j = reference_by_support[key]
+        comparisons[key] = compare_quantities(
+            band_quantity(reference, j), band_quantity(estimate, i),
+            ComparisonRequest("descriptive_difference"),
+        )
+        if comparisons[key].decision != "accepted":
+            raise ValueError(f"comparison policy: {comparisons[key].reason}")
     out.mkdir(parents=True, exist_ok=True)
     resolved = resolved_measure_config(config)
     dft_settings = {
@@ -365,9 +388,9 @@ def write_measure_run(
     writer.writerow(MEASURE_COLUMNS)
     power_unit = f"({record.sample_unit})^2"
     summary_methods = []
-    for measurement, settings, settings_hash in (
-        (reference, dft_settings, dft_hash),
-        (estimate, estimate.settings, estimate.settings_hash),
+    for measurement, settings, settings_hash, is_candidate in (
+        (reference, dft_settings, dft_hash, False),
+        (estimate, estimate.settings, estimate.settings_hash, True),
     ):
         method_bands = []
         for i, band in enumerate(measurement.bands):
@@ -390,7 +413,15 @@ def write_measure_run(
             )
             power_status = measurement.power_statuses[i] if measurement.power_statuses else "ok"
             power_reason = measurement.power_reasons[i] if measurement.power_reasons else None
-            difference = power - reference.powers[i]
+            key = (band.lower_hz, band.upper_hz, band.include_upper)
+            comparison = comparisons[key] if is_candidate else compare_quantities(
+                band_quantity(reference, reference_by_support[key]),
+                band_quantity(reference, reference_by_support[key]),
+                ComparisonRequest("exact_target"),
+            )
+            if comparison.decision != "accepted":
+                raise ValueError(f"comparison policy: {comparison.reason}")
+            difference = comparison.signed_difference
             writer.writerow(
                 (
                     config.tones.experiment_id,
@@ -428,8 +459,7 @@ def write_measure_run(
                     "",
                     "descriptive",
                     "different_finite_record_functionals"
-                    if measurement is estimate
-                    else "same_method",
+                    if comparison.relation == "different_functionals" else "same_method",
                 )
             )
             method_bands.append(

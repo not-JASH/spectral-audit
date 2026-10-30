@@ -1,0 +1,26 @@
+# Bounded M1 paired-record comparison contract
+
+Policy `m1_comparison_v1` applies to selected quantities from the existing DFT, fixed Hann Welch, two-level Haar, and two-level db4 results. Its two requests are `exact_target` and `descriptive_difference`. `compare_quantities` decides the target relationship before performing arithmetic. The signed difference is always candidate minus reference. An exact request never falls back to a descriptive request.
+
+## Identity and outcomes
+
+A quantity carries the canonical little-endian float64 sample-byte `record_id`, original `n`, sampling rate, input unit, preprocessing, complete resolved method settings and hash, method/contract ID, selected support or native group role, normalization, value unit, denominator definition for a ratio, and originating result binding. The context fingerprint combines the sample ID with length, rate, unit, and preprocessing. The existing `record_id` keeps its sample-byte-only meaning. Fourier bands use physical bounds and endpoint inclusion, not display names. Native groups use wavelet, mode, level, role, retention, and normalization; nominal frequency annotations do not map them to Fourier bands.
+
+`accepted` means a named rule supports the requested relationship. `refused` means known semantics or pairing contradict it. `unavailable` means the population target, mapping, or method definition is not supported. `invalid` means malformed or contradictory metadata or values. The separate relation is `same_target`, `exact_conversion`, `different_functionals`, or `unresolved`. An accepted exact target may numerically `agree`, `disagree`, or have an `unavailable_metric`. Descriptive differences have numerical status `descriptive` and no exact-equivalence verdict. Rejected requests have no authorized signed difference. Finite values are compared with a declared absolute plus relative tolerance in the quantity's units; this tolerance does not affect target decisions.
+
+## Supported rules
+
+- `A_identical_definition_v1`: independently obtained paired results with the same supported finite-record definition, resolved settings, support, normalization, and denominator target. Cosmetic labels and collection order are ignored.
+- `B_actual_record_mean_square_v1`: direct `dot(x,x)/n`, complete DFT bin partition, complete orthonormal Haar groups, and all retained db4 periodization groups when original `n` is divisible by four. The complete support/count conditions are checked without consulting values. Hann Welch, redundant db4 `periodic`, partial groups, and incompatible db4 lengths do not satisfy this identity.
+- `C_native_mean_to_record_energy_v1`: explicitly requested conversion for the same retained native coefficient group, multiplying coefficient mean square by validated coefficient count divided by original `n`. It applies to orthonormal and redundant outputs. The original kind/value, count, length, factor, and converted value are recorded; it makes no total-partition claim.
+- `D_dft_welch_band_v1` and `D_db4_mode_group_v1`: explicitly descriptive signed differences for paired DFT/Welch absolute powers with the same physical band, and paired db4 `periodic`/`periodization` corresponding record-normalized native groups. They establish `different_functionals`.
+
+A ratio includes both numerator and denominator definitions. A coincident numeric denominator is insufficient; a supported Rule B mapping can establish denominator identity. Zero absolute powers are valid. A matched ratio with zero denominator retains an accepted target relation but has `unavailable_metric` and reason `zero_denominator`.
+
+Unknown methods, population-target requests, unsupported mappings, arbitrary conversions, and automatic native-to-Fourier mappings remain unavailable or refused as appropriate. This policy does not infer general operator equivalence, import arbitrary artifacts, convert physical units automatically, or perform a statistical test. It does not claim that different estimators cannot estimate a common population quantity.
+
+## Control suite and limits
+
+`configs/m1_comparison_controls.toml` declares the expected decision, reason, numerical status, and category for every case. The production policy never reads those labels. `comparison-audit` builds substantive operands from current estimators, with explicitly marked perturbation controls. The suite includes valid identities and deliberately mismatched records, units, rates, preprocessing, normalization, Fourier support, native retention, filters, boundaries, denominator targets, unknown mappings, zero records, malformed metadata, and reordered collections. The generated CSV retains both operand definitions and values; the summary counts expected mismatches and false acceptances/rejections with denominators. A complete run with correctly refused or invalid cases succeeds. Any unexpected outcome, missing case, or missed injected numerical disagreement fails verification. These are finite deterministic control results, not calibrated diagnostic performance rates.
+
+The DFT/Welch and boundary production writers call the same policy before producing their legacy descriptive differences. Their existing schema and field meanings remain in place; richer evidence is in the comparison-audit artifacts.

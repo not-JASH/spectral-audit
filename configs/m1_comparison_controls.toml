@@ -1,0 +1,44 @@
+config_kind = "m1_comparison_controls"
+schema_version = 1
+
+# Expected outcomes are fixed here, outside the comparison policy. Faulty metadata
+# and perturbed values are deliberately injected control fixtures.
+[controls]
+direct_dft_total = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "record_identity" }
+haar_dft_total = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "record_identity" }
+db4_partition = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "record_identity" }
+haar_conversion = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "normalization_conversion" }
+redundant_conversion = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "normalization_conversion" }
+independent_calls = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "definition_identity" }
+cosmetic_band_name = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "definition_identity" }
+explicit_defaults = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "definition_identity" }
+perturbed_value = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "disagree", category = "numerical_fault" }
+coincident_dft_welch_exact = { decision = "refused", reason = "different_finite_record_functionals", numerical_status = "not_evaluated", category = "different_functional" }
+dft_welch_descriptive = { decision = "accepted", reason = "permitted_descriptive_pair", numerical_status = "descriptive", category = "descriptive" }
+edge_descriptive = { decision = "accepted", reason = "permitted_descriptive_pair", numerical_status = "descriptive", category = "descriptive" }
+haar_fourier = { decision = "refused", reason = "different_finite_record_functionals", numerical_status = "not_evaluated", category = "nominal_band" }
+haar_db4 = { decision = "refused", reason = "different_finite_record_functionals", numerical_status = "not_evaluated", category = "native_filter" }
+periodic_partition = { decision = "refused", reason = "different_finite_record_functionals", numerical_status = "not_evaluated", category = "boundary_partition" }
+odd_periodization_partition = { decision = "refused", reason = "different_finite_record_functionals", numerical_status = "not_evaluated", category = "boundary_partition" }
+welch_ratio_denominators = { decision = "refused", reason = "different_finite_record_functionals", numerical_status = "not_evaluated", category = "denominator" }
+opposite_records = { decision = "refused", reason = "paired_record_context_mismatch", numerical_status = "not_evaluated", category = "record_context" }
+different_rate = { decision = "refused", reason = "paired_record_context_mismatch", numerical_status = "not_evaluated", category = "record_context" }
+different_unit = { decision = "refused", reason = "paired_record_context_mismatch", numerical_status = "not_evaluated", category = "record_context" }
+unknown_method = { decision = "unavailable", reason = "unsupported_definition", numerical_status = "not_evaluated", category = "unsupported" }
+population_request = { decision = "unavailable", reason = "population_mapping_unavailable", numerical_status = "not_evaluated", category = "unsupported" }
+unknown_conversion = { decision = "unavailable", reason = "unsupported_conversion", numerical_status = "not_evaluated", category = "unsupported" }
+zero_absolute = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "zero" }
+zero_ratio = { decision = "accepted", reason = "zero_denominator", numerical_status = "unavailable_metric", category = "zero" }
+settings_hash_conflict = { decision = "invalid", reason = "settings_hash_mismatch", numerical_status = "not_evaluated", category = "malformed" }
+impossible_count = { decision = "invalid", reason = "impossible_coefficient_count", numerical_status = "not_evaluated", category = "malformed" }
+nonfinite_value = { decision = "invalid", reason = "nonfinite_value", numerical_status = "not_evaluated", category = "malformed" }
+changed_preprocessing = { decision = "refused", reason = "paired_record_context_mismatch", numerical_status = "not_evaluated", category = "preprocessing" }
+changed_normalization = { decision = "refused", reason = "normalization_mismatch", numerical_status = "not_evaluated", category = "normalization" }
+changed_fourier_support = { decision = "refused", reason = "different_finite_record_functionals", numerical_status = "not_evaluated", category = "fourier_support" }
+changed_retention = { decision = "refused", reason = "different_finite_record_functionals", numerical_status = "not_evaluated", category = "retention" }
+missing_evidence = { decision = "invalid", reason = "settings_hash_mismatch", numerical_status = "not_evaluated", category = "missing_evidence" }
+db4_mode_descriptive = { decision = "accepted", reason = "permitted_descriptive_pair", numerical_status = "descriptive", category = "descriptive" }
+conversion_required = { decision = "refused", reason = "normalization_mismatch", numerical_status = "not_evaluated", category = "normalization" }
+reordered_bands = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "collection_order" }
+reordered_groups = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "collection_order" }
+zero_welch_absolute = { decision = "accepted", reason = "supported_exact_identity", numerical_status = "agree", category = "zero" }

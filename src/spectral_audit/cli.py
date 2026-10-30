@@ -8,6 +8,7 @@ from pathlib import Path
 
 from spectral_audit import __version__
 from spectral_audit.boundary_audit import run as run_boundary_audit
+from spectral_audit.comparison_audit import run as run_comparison_audit
 from spectral_audit.config import load_demo_config, load_measure_config
 from spectral_audit.estimators.dwt import measure_dwt
 from spectral_audit.estimators.welch import measure_welch
@@ -33,6 +34,9 @@ def main(argv: list[str] | None = None) -> int:
     boundary = commands.add_parser("boundary-audit", help="run bounded db4 boundary audit")
     boundary.add_argument("--config", required=True, type=Path)
     boundary.add_argument("--out", required=True, type=Path)
+    comparison = commands.add_parser("comparison-audit", help="run bounded M1 comparison controls")
+    comparison.add_argument("--config", required=True, type=Path)
+    comparison.add_argument("--out", required=True, type=Path)
     args = parser.parse_args(argv)
     started = datetime.now(UTC)
     clock = time.perf_counter()
@@ -43,6 +47,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "boundary-audit":
             manifest = run_boundary_audit(args.config, args.out, root)
             print(f"boundary audit: {len(manifest['input_records'])} input records")
+            print(args.out / "manifest.json")
+            return 0
+        if args.command == "comparison-audit":
+            manifest = run_comparison_audit(args.config, args.out, root)
+            print(
+                f"comparison audit: {len(manifest['resolved_configuration']['controls'])} controls"
+            )
             print(args.out / "manifest.json")
             return 0
         if args.command == "demo":
