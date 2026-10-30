@@ -14,9 +14,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
+import scipy
 
 from spectral_audit import __version__
-from spectral_audit.config import canonical_json_bytes, resolved_config
+from spectral_audit.config import (
+    MeasureConfig,
+    canonical_json_bytes,
+    resolved_config,
+    resolved_measure_config,
+)
 from spectral_audit.types import DemoConfig, Measurement, SignalRecord
 
 CSV_COLUMNS = (
@@ -237,6 +243,241 @@ def write_demo_run(
         },
     }
     paths = RunPaths(out / "band_powers.csv", out / "summary.json", out / "manifest.json")
+    _atomic_write(paths.csv, csv_data)
+    _atomic_write(paths.summary, summary_data)
+    _atomic_write(paths.manifest, json_bytes(manifest))
+    return paths
+
+
+MEASURE_COLUMNS = (
+    "case_id",
+    "record_id",
+    "method_id",
+    "measurement_kind",
+    "population_target_kind",
+    "settings_hash",
+    "band",
+    "lower_hz",
+    "upper_hz",
+    "include_upper",
+    "band_power",
+    "power_unit",
+    "power_status",
+    "power_reason",
+    "record_power",
+    "method_total_power",
+    "method_total_minus_record_power",
+    "record_power_fraction",
+    "record_fraction_status",
+    "record_fraction_reason",
+    "method_total_fraction",
+    "method_fraction_status",
+    "method_fraction_reason",
+    "comparison_reference_id",
+    "difference_from_dft",
+    "comparison_status",
+    "comparison_reason",
+)
+
+
+def write_measure_run(
+    out: Path,
+    config: MeasureConfig,
+    record: SignalRecord,
+    reference: Measurement,
+    estimate: Measurement,
+    config_path: Path,
+    root: Path,
+    started_at: datetime,
+    elapsed_seconds: float,
+    command_arguments: list[str],
+) -> RunPaths:
+    if out.exists() and (not out.is_dir() or any(out.iterdir())):
+        raise ValueError(f"output directory already exists and is nonempty: {out}")
+    if reference.bands != estimate.bands or reference.record_power != estimate.record_power:
+        raise ValueError("comparison requires the same record and bands")
+    out.mkdir(parents=True, exist_ok=True)
+    sample_bytes = np.asarray(record.samples, dtype="<f8", order="C").tobytes(order="C")
+    record_id = digest(sample_bytes)
+    resolved = resolved_measure_config(config)
+    dft_settings = {
+        "method_id": reference.method_id,
+        "fft_norm": "ortho",
+        "preprocessing": "none",
+        "support": "full_finite_record",
+        "bin_selection": "absolute_physical_frequency",
+        "endpoint_rule": "lower_inclusive; internal_upper_exclusive; final_upper_inclusive",
+        "normalization": "unitary_dft_squared_magnitude_divided_by_n",
+    }
+    dft_hash = digest(canonical_json_bytes(dft_settings))
+    rows = io.StringIO(newline="")
+    writer = csv.writer(rows, lineterminator="\n")
+    writer.writerow(MEASURE_COLUMNS)
+    power_unit = f"({record.sample_unit})^2"
+    summary_methods = []
+    for measurement, settings, settings_hash in (
+        (reference, dft_settings, dft_hash),
+        (estimate, estimate.settings, estimate.settings_hash),
+    ):
+        method_bands = []
+        for i, band in enumerate(measurement.bands):
+            power = measurement.powers[i]
+            record_fraction = measurement.fractions[i]
+            record_reason = measurement.reasons[i]
+            method_fraction = (
+                measurement.method_total_fractions[i]
+                if measurement.method_total_fractions
+                else None
+                if measurement.method_total == 0
+                else power / measurement.method_total
+            )
+            method_reason = (
+                measurement.method_total_reasons[i]
+                if measurement.method_total_reasons
+                else "zero_method_total_power"
+                if measurement.method_total == 0
+                else None
+            )
+            power_status = measurement.power_statuses[i] if measurement.power_statuses else "ok"
+            power_reason = measurement.power_reasons[i] if measurement.power_reasons else None
+            difference = power - reference.powers[i]
+            writer.writerow(
+                (
+                    config.tones.experiment_id,
+                    record_id,
+                    measurement.method_id,
+                    measurement.measurement_kind,
+                    measurement.population_target_kind or "",
+                    settings_hash,
+                    band.name,
+                    _number(band.lower_hz),
+                    _number(band.upper_hz),
+                    str(band.include_upper).lower(),
+                    _number(power),
+                    power_unit,
+                    power_status,
+                    power_reason or "",
+                    _number(measurement.record_power),
+                    _number(measurement.method_total),
+                    _number(measurement.method_total - measurement.record_power),
+                    _number(record_fraction),
+                    "undefined" if record_reason else "ok",
+                    record_reason or "",
+                    _number(method_fraction),
+                    "undefined" if method_reason else "ok",
+                    method_reason or "",
+                    reference.method_id,
+                    _number(difference),
+                    "descriptive",
+                    "different_finite_record_functionals"
+                    if measurement is estimate
+                    else "same_method",
+                )
+            )
+            method_bands.append(
+                {
+                    "name": band.name,
+                    "lower_hz": band.lower_hz,
+                    "upper_hz": band.upper_hz,
+                    "include_upper": band.include_upper,
+                    "band_power": power,
+                    "power_status": power_status,
+                    "power_reason": power_reason,
+                    "record_power_fraction": record_fraction,
+                    "record_fraction_status": "undefined" if record_reason else "ok",
+                    "record_fraction_reason": record_reason,
+                    "method_total_fraction": method_fraction,
+                    "method_fraction_status": "undefined" if method_reason else "ok",
+                    "method_fraction_reason": method_reason,
+                    "difference_from_dft": difference,
+                }
+            )
+        summary_methods.append(
+            {
+                "method_id": measurement.method_id,
+                "measurement_kind": measurement.measurement_kind,
+                "population_target_kind": measurement.population_target_kind,
+                "settings": settings,
+                "settings_hash": settings_hash,
+                "support": measurement.support
+                or {
+                    "sample_indices": [0, record.samples.size - 1],
+                    "sample_count": record.samples.size,
+                },
+                "record_power": measurement.record_power,
+                "method_total_power": measurement.method_total,
+                "method_total_minus_record_power": measurement.method_total
+                - measurement.record_power,
+                "accounting_error": measurement.accounting_error
+                if measurement.accounting_error is not None
+                else measurement.method_total - measurement.record_power,
+                "bands": method_bands,
+            }
+        )
+    csv_data = rows.getvalue().encode("utf-8")
+    summary_data = json_bytes(
+        {
+            "schema_version": 2,
+            "case_id": config.tones.experiment_id,
+            "record_id": record_id,
+            "n_samples": record.samples.size,
+            "sampling_rate_hz": record.sampling_rate_hz,
+            "sample_unit": record.sample_unit,
+            "power_unit": power_unit,
+            "density_unit": f"({record.sample_unit})^2/Hz",
+            "preprocessing": "none",
+            "comparison_reference_id": reference.method_id,
+            "comparison_status": "descriptive",
+            "comparison_reason": "different_finite_record_functionals",
+            "methods": summary_methods,
+        }
+    )
+    inventory, source_digest = _source_inventory(root)
+    revision = _git(root, "rev-parse", "HEAD")
+    git_root = _git(root, "rev-parse", "--show-toplevel")
+    git_status = _git(root, "status", "--porcelain")
+    state = (
+        "unversioned"
+        if revision is None
+        or git_root is None
+        or git_status is None
+        or Path(git_root).resolve() != root.resolve()
+        else "dirty"
+        if git_status
+        else "clean"
+    )
+    manifest = {
+        "schema_version": 2,
+        "package_version": __version__,
+        "run_status": "complete",
+        "resolved_configuration": resolved,
+        "resolved_configuration_sha256": digest(canonical_json_bytes(resolved)),
+        "source_config_sha256": digest(config_path.read_bytes()),
+        "signal": {
+            "sha256": record_id,
+            "dtype": "float64",
+            "byte_order": "little",
+            "shape": [record.samples.size],
+            "order": "C",
+        },
+        "python_version": platform.python_version(),
+        "numpy_version": np.__version__,
+        "scipy_version": scipy.__version__,
+        "platform": platform.platform(),
+        "source_revision": revision if state != "unversioned" else None,
+        "source_state": state,
+        "source_files": inventory,
+        "source_digest": source_digest,
+        "outputs": {"comparisons.csv": digest(csv_data), "summary.json": digest(summary_data)},
+        "invocation": {
+            "started_at_utc": started_at.astimezone(UTC).isoformat(),
+            "elapsed_seconds": elapsed_seconds,
+            "arguments": command_arguments,
+            "output_directory": str(out.resolve()),
+            "executable": sys.executable,
+        },
+    }
+    paths = RunPaths(out / "comparisons.csv", out / "summary.json", out / "manifest.json")
     _atomic_write(paths.csv, csv_data)
     _atomic_write(paths.summary, summary_data)
     _atomic_write(paths.manifest, json_bytes(manifest))

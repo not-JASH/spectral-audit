@@ -1,6 +1,6 @@
 # Spectral Audit
 
-Spectral Audit studies when classical spectral and multiresolution band-power measurements can be compared. This repository currently implements **M0 only**: a strict synthetic two-tone configuration, a unitary finite-record DFT band reference, a deterministic CLI run, and numerical/provenance checks. The DFT result is a measurement of the declared finite record, not an estimate of an unknown continuous spectrum or a cross-method research finding.
+Spectral Audit studies when classical spectral and multiresolution band-power measurements can be compared. This repository implements M0 and a **bounded first M1 Welch increment**: an explicit estimator contract, one mean-density Welch adapter, and a descriptive comparison with the finite-record DFT reference. Full M1, including DWT and further prior-work review, remains open. The DFT result is a measurement of the declared finite record, not an estimate of an unknown continuous spectrum.
 
 ## Quick start
 
@@ -14,6 +14,8 @@ python -m pip install --no-deps -e '.[dev]'
 spectral-audit --help
 spectral-audit --version
 spectral-audit demo --config configs/m0_tones.toml --out results/m0_demo
+spectral-audit measure --config configs/m1_welch_tones.toml --out results/m1_tones
+spectral-audit measure --config configs/m1_welch_edge_tone.toml --out results/m1_edge
 ```
 
 The lock records the tested CPython 3.11 Windows environment. On another platform, use compatible resolved packages if a pinned wheel is unavailable, and record that environment separately. Refresh the lock in a fresh environment with `python -m pip install -e '.[dev]'` followed by `python -m pip freeze --exclude-editable > requirements-lock.txt`, then rerun tests, lint, and the demo. The project-local editable distribution is omitted from the lock intentionally.
@@ -28,7 +30,7 @@ The command writes `band_powers.csv` with absolute powers and explicitly denomin
 
 Run `python -m pytest -q` and `python -m ruff check .`. Tests include independent rFFT and explicit-DFT checks, endpoint and scaling cases, strict configuration rejection, deterministic artifacts, and manifest digests.
 
-The [research protocol](docs/RESEARCH_PROTOCOL.md) defines the measurement targets. See the [engineering specification](docs/ENGINEERING_SPEC.md), [acceptance criteria](docs/ACCEPTANCE_CRITERIA.md), [roadmap](docs/ROADMAP.md), and [references](docs/REFERENCES.md). M1 plans estimator contracts and Welch/STFT/DWT measurements; M2 plans finite operators and diagnostics; M3 plans development studies; M4 plans frozen confirmation and a report. These later methods and results are **not implemented**.
+The [research protocol](docs/RESEARCH_PROTOCOL.md) defines the measurement targets. See the [measure contract](docs/MEASURE_CONTRACT.md), [comparison example](docs/M1_WELCH_EXAMPLE.md), [engineering specification](docs/ENGINEERING_SPEC.md), [acceptance criteria](docs/ACCEPTANCE_CRITERIA.md), [roadmap](docs/ROADMAP.md), and [references](docs/REFERENCES.md). DWT, dense operators, diagnostics, development studies, and confirmation remain planned.
 
 ## Citation and license
 

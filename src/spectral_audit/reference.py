@@ -1,6 +1,7 @@
 """Exact finite-record Fourier band measurement."""
 
 from collections.abc import Sequence
+from hashlib import sha256
 
 import numpy as np
 
@@ -46,4 +47,9 @@ def fourier_reference(record: SignalRecord, bands: Sequence[Band]) -> Measuremen
         fractions,
         "undefined" if zero else "ok",
         reasons,
+        record_id=sha256(np.asarray(record.samples, dtype="<f8", order="C").tobytes()).hexdigest(),
+        n_samples=n,
+        sampling_rate_hz=record.sampling_rate_hz,
+        sample_unit=record.sample_unit,
+        power_unit=f"({record.sample_unit})^2",
     )

@@ -1,0 +1,49 @@
+schema_version = 2
+experiment_id = "m1_coherent_tones"
+
+[record]
+n_samples = 256
+sampling_rate_hz = 128.0
+sample_unit = "a.u."
+mean_policy = "none"
+
+[signal]
+kind = "tones"
+frequencies_hz = [8.0, 24.0]
+amplitudes = [1.0, 0.5]
+phases_rad = [0.0, 0.0]
+
+[[bands]]
+name = "low"
+lower_hz = 0.0
+upper_hz = 16.0
+include_upper = false
+
+[[bands]]
+name = "mid"
+lower_hz = 16.0
+upper_hz = 32.0
+include_upper = false
+
+[[bands]]
+name = "high"
+lower_hz = 32.0
+upper_hz = 64.0
+include_upper = true
+
+[reference]
+kind = "finite_record_dft"
+fft_norm = "ortho"
+
+[welch]
+method_id = "welch_mean_density_v1"
+segment_length = 64
+noverlap = 32
+nfft = 64
+taper = "hann_periodic"
+detrend = false
+sidedness = "onesided"
+scaling = "density"
+average = "mean"
+boundary = "none"
+padding = "none"

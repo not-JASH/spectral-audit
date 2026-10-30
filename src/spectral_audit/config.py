@@ -2,8 +2,10 @@
 
 import json
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
+from spectral_audit.estimators.welch import WelchSettings
 from spectral_audit.types import Band, DemoConfig, RecordConfig, ToneSignalConfig
 
 
@@ -26,9 +28,16 @@ def _array(value: object, label: str) -> tuple:
 def load_demo_config(path: Path) -> DemoConfig:
     with path.open("rb") as stream:
         data = tomllib.load(stream)
-    _keys(data, {"schema_version", "experiment_id", "record", "signal", "bands", "reference"})
-    if type(data["schema_version"]) is not int or data["schema_version"] != 1:
-        raise ValueError("unsupported schema_version; expected 1")
+    return _parse_tones(data, 1)
+
+
+def _parse_tones(data: dict, version: int) -> DemoConfig:
+    expected = {"schema_version", "experiment_id", "record", "signal", "bands", "reference"}
+    if version == 2:
+        expected.add("welch")
+    _keys(data, expected)
+    if type(data["schema_version"]) is not int or data["schema_version"] != version:
+        raise ValueError(f"unsupported schema_version; expected {version}")
     r = _keys(data["record"], {"n_samples", "sampling_rate_hz", "sample_unit"}, {"mean_policy"})
     s = _keys(data["signal"], {"kind", "frequencies_hz", "amplitudes", "phases_rad"})
     ref = _keys(data["reference"], {"kind", "fft_norm"})
@@ -52,6 +61,47 @@ def load_demo_config(path: Path) -> DemoConfig:
         ),
         tuple(bands),
     )
+
+
+@dataclass(frozen=True)
+class MeasureConfig:
+    tones: DemoConfig
+    welch: WelchSettings
+
+
+def load_measure_config(path: Path) -> MeasureConfig:
+    with path.open("rb") as stream:
+        data = tomllib.load(stream)
+    tones = _parse_tones(data, 2)
+    w = _keys(
+        data["welch"],
+        {"method_id", "segment_length", "noverlap"},
+        {"nfft", "taper", "detrend", "sidedness", "scaling", "average", "boundary", "padding"},
+    )
+    if w["method_id"] != "welch_mean_density_v1":
+        raise ValueError("unsupported Welch method_id")
+    return MeasureConfig(
+        tones,
+        WelchSettings(
+            segment_length=w["segment_length"],
+            noverlap=w["noverlap"],
+            nfft=w.get("nfft"),
+            taper=w.get("taper", "hann_periodic"),
+            detrend=w.get("detrend", False),
+            sidedness=w.get("sidedness", "onesided"),
+            scaling=w.get("scaling", "density"),
+            average=w.get("average", "mean"),
+            boundary=w.get("boundary", "none"),
+            padding=w.get("padding", "none"),
+        ),
+    )
+
+
+def resolved_measure_config(config: MeasureConfig) -> dict:
+    result = resolved_config(config.tones)
+    result["schema_version"] = 2
+    result["welch"] = config.welch.resolved()
+    return result
 
 
 def resolved_config(config: DemoConfig) -> dict:

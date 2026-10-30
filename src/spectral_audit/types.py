@@ -149,7 +149,25 @@ class Measurement:
     fractions: tuple[float | None, ...]
     status: str
     reasons: tuple[str | None, ...]
+    measurement_kind: str = "finite_record_fourier"
+    population_target_kind: str | None = None
+    method_total_power: float | None = None
+    method_total_fractions: tuple[float | None, ...] = ()
+    method_total_reasons: tuple[str | None, ...] = ()
+    power_statuses: tuple[str, ...] = ()
+    power_reasons: tuple[str | None, ...] = ()
+    settings: dict | None = None
+    settings_hash: str | None = None
+    support: dict | None = None
+    record_id: str | None = None
+    accounting_error: float | None = None
+    n_samples: int | None = None
+    sampling_rate_hz: float | None = None
+    sample_unit: str | None = None
+    power_unit: str | None = None
+    density_unit: str | None = None
+    preprocessing: str = "none"
 
     @property
     def method_total(self) -> float:
-        return sum(self.powers)
+        return self.method_total_power if self.method_total_power is not None else sum(self.powers)
